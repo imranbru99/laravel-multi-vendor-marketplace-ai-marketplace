@@ -1,0 +1,11 @@
+# Testing
+
+PHPUnit feature tests exercise persisted outcomes using fresh schema/fixtures, not mocks of the commerce service itself. They cover exact money, multi-vendor splitting, snapshots, warehouse stock/reservations, oversell rollback, coupon limits, capture idempotency, signed webhooks, cancellation/expiry, partial refunds, settlement holds, journal balance, module dependencies/shutdown, branch entitlements, tenant/FK leakage, customer ownership, API authentication, login/register, PDF bytes, private digital downloads, support, quotations, bookings, purchase receipt, stock transfers and queued notification handling. Livewire tests cover nested context restoration, module toggles and a real create modal.
+
+Run `php artisan test`. Use PostgreSQL environment overrides to run the same suite on a fresh isolated test database. `tests/Concurrency/run.php` launches independent PHP processes against committed PostgreSQL fixtures and refuses any database not ending in _concurrency. It verifies last stock, duplicate captures, competing refunds, duplicate settlements, last coupon, transfers and module shutdown. It is intentionally separate from transaction-wrapped RefreshDatabase tests.
+
+`marketplace:verify` is a read-only reconciliation of balances/movements, order arithmetic and journals. Browser observations are recorded in VERIFICATION.md and screenshots. Browser checks supplement HTTP tests; they do not certify all device sizes or accessibility.
+
+Formatting: vendor/bin/pint --test. Dependencies: composer validate --strict and composer audit --locked. Frontend: npm ci and npm run build. CI configuration runs SQLite/PostgreSQL and the concurrency harness, but remote runner success is not inferred from the YAML file.
+
+Additional coverage includes configurable role grants/denials/revocation, branch allocated-line actions, module scope inheritance/platform toggles, sandbox subscription invoices/quota/expiry/renewal snapshots, effective commission/tax/shipping rules, partial fulfillment history, return decisions, catalog proposals/rights/CSV staging/variants, the actual vendor create modal, customer API abilities/ownership/retries, account cart merging, single-use tenant-bound password recovery and historical slug redirects. Test results and limitations are recorded in VERIFICATION.md.

@@ -1,0 +1,403 @@
+openapi: 3.0.3
+info:
+  title: Multi-vendor Marketplace Customer API
+  version: 1.0.0
+  description: Tenant-bound customer commerce. Payments are sandbox-only.
+  contact:
+    name: Imran Ahmed
+    email: me@imrandev.bd
+    url: https://imrandev.bd
+servers:
+- url: http://127.0.0.1:8000/api/v1
+  description: Local development
+paths:
+  /products:
+    get:
+      summary: Published catalog
+      operationId: getProducts
+      responses:
+        '200':
+          description: Success
+        '422':
+          description: Validation or business rule failure
+  /tokens:
+    post:
+      summary: Issue 30-day commerce token
+      operationId: postTokens
+      responses:
+        '200':
+          description: Success
+        '422':
+          description: Validation or business rule failure
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                device_name:
+                  type: string
+                  maxLength: 80
+              required:
+              - email
+              - password
+              - device_name
+  /tokens/current:
+    delete:
+      summary: Revoke current token
+      operationId: deleteTokensCurrent
+      responses:
+        '204':
+          description: Revoked
+        '401':
+          description: Unauthenticated
+      security:
+      - bearerAuth: []
+      description: 'Required ability: authenticated'
+  /cart:
+    get:
+      summary: Get active account cart
+      operationId: getCart
+      responses:
+        '200':
+          description: Success
+        '422':
+          description: Validation or business rule failure
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Missing ability
+        '404':
+          description: Owned record not found
+      security:
+      - bearerAuth: []
+      description: 'Required ability: cart:write'
+  /cart/items:
+    post:
+      summary: Add an offer
+      operationId: postCartItems
+      responses:
+        '200':
+          description: Success
+        '422':
+          description: Validation or business rule failure
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Missing ability
+        '404':
+          description: Owned record not found
+      security:
+      - bearerAuth: []
+      description: 'Required ability: cart:write'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                offer_id:
+                  type: integer
+                  minimum: 1
+                quantity:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+              required:
+              - offer_id
+              - quantity
+  /cart/items/{item}:
+    patch:
+      summary: Set cart item quantity (zero removes)
+      operationId: patchCartItemsItem
+      responses:
+        '200':
+          description: Success
+        '422':
+          description: Validation or business rule failure
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Missing ability
+        '404':
+          description: Owned record not found
+      security:
+      - bearerAuth: []
+      description: 'Required ability: cart:write'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quantity:
+                  type: integer
+                  minimum: 0
+                  maximum: 100
+              required:
+              - quantity
+      parameters:
+      - in: path
+        name: item
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+  /checkout:
+    post:
+      summary: Idempotent checkout
+      operationId: postCheckout
+      responses:
+        '200':
+          description: Success
+        '422':
+          description: Validation or business rule failure
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Missing ability
+        '404':
+          description: Owned record not found
+        '201':
+          description: Created
+      security:
+      - bearerAuth: []
+      description: 'Required ability: orders:write'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotency_key:
+                  type: string
+                  format: uuid
+                email:
+                  type: string
+                  format: email
+                address:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      maxLength: 100
+                    line1:
+                      type: string
+                      maxLength: 200
+                    city:
+                      type: string
+                      maxLength: 100
+                    postal_code:
+                      type: string
+                      maxLength: 20
+                    country:
+                      type: string
+                      maxLength: 2
+                  required:
+                  - name
+                  - line1
+                  - city
+                  - postal_code
+                  - country
+                  additionalProperties: false
+                coupon:
+                  type: string
+                  maxLength: 50
+              required:
+              - idempotency_key
+              - email
+              - address
+  /orders:
+    get:
+      summary: Own order summaries
+      operationId: getOrders
+      responses:
+        '200':
+          description: Success
+        '422':
+          description: Validation or business rule failure
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Missing ability
+        '404':
+          description: Owned record not found
+      security:
+      - bearerAuth: []
+      description: 'Required ability: orders:read'
+  /orders/{number}:
+    get:
+      summary: Own order snapshots and tracking
+      operationId: getOrdersNumber
+      responses:
+        '200':
+          description: Success
+        '422':
+          description: Validation or business rule failure
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Missing ability
+        '404':
+          description: Owned record not found
+      security:
+      - bearerAuth: []
+      description: 'Required ability: orders:read'
+      parameters:
+      - in: path
+        name: number
+        required: true
+        schema:
+          type: string
+  /orders/{number}/sandbox-payment:
+    post:
+      summary: Confirm sandbox payment
+      operationId: postOrdersNumberSandboxPayment
+      responses:
+        '200':
+          description: Success
+        '422':
+          description: Validation or business rule failure
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Missing ability
+        '404':
+          description: Owned record not found
+      security:
+      - bearerAuth: []
+      description: 'Required ability: orders:write'
+      parameters:
+      - in: path
+        name: number
+        required: true
+        schema:
+          type: string
+  /orders/{number}/cancel:
+    post:
+      summary: Cancel unpaid order
+      operationId: postOrdersNumberCancel
+      responses:
+        '200':
+          description: Success
+        '422':
+          description: Validation or business rule failure
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Missing ability
+        '404':
+          description: Owned record not found
+      security:
+      - bearerAuth: []
+      description: 'Required ability: orders:write'
+      parameters:
+      - in: path
+        name: number
+        required: true
+        schema:
+          type: string
+  /order-items/{item}/returns:
+    post:
+      summary: Request eligible physical return
+      operationId: postOrderItemsItemReturns
+      responses:
+        '200':
+          description: Success
+        '422':
+          description: Validation or business rule failure
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Missing ability
+        '404':
+          description: Owned record not found
+        '201':
+          description: Created
+      security:
+      - bearerAuth: []
+      description: 'Required ability: returns:write'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quantity:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                reason:
+                  type: string
+                  minLength: 5
+                  maxLength: 2000
+              required:
+              - quantity
+              - reason
+      parameters:
+      - in: path
+        name: item
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+  /webhooks/sandbox:
+    post:
+      summary: Signed internal sandbox callback
+      operationId: postWebhooksSandbox
+      responses:
+        '200':
+          description: Success
+        '422':
+          description: Validation or business rule failure
+        '503':
+          description: Server secret not configured
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event_id:
+                  type: string
+                  maxLength: 100
+                reference:
+                  type: string
+                  maxLength: 100
+                amount_minor:
+                  type: integer
+                  minimum: 0
+                currency:
+                  type: string
+                  minLength: 3
+                  maxLength: 3
+              required:
+              - event_id
+              - reference
+              - amount_minor
+              - currency
+      parameters:
+      - in: header
+        name: X-Sandbox-Signature
+        required: true
+        schema:
+          type: string
+        description: Hex HMAC SHA-256 of exact raw JSON body
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas: {}

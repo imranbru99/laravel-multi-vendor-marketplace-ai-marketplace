@@ -1,0 +1,6 @@
+<x-filament-panels::page>
+<p>Seller and branch settings can restrict enabled marketplace modules. They cannot override a disabled parent, plan restriction, permission denial, dependency, or active business obligation.</p>
+@if($errors->any())<p role="alert">{{ $errors->first() }}</p>@endif
+<label>Scope<select wire:model.live="scope"><option value="vendor" @disabled(auth()->user()->branch_id)>Seller</option><option value="branch">Branch</option></select></label><label>Business location<select wire:model.live="subjectId"><option value="0">Choose a business</option>@foreach($this->subjects() as $id=>$name)<option value="{{ $id }}">{{ $name }}</option>@endforeach</select></label>
+@if($subjectId>0)<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">@foreach(app(\App\Domain\ModuleManager::class)->scopedKeys() as $key)<x-filament::section :heading="config('marketplace.modules.'.$key.'.name')"><p>{{ $this->effective($key)?'Enabled':'Restricted' }}</p><x-filament::button wire:click="toggle('{{ $key }}')" wire:loading.attr="disabled">{{ $this->effective($key)?'Restrict for this business':'Allow if parent permits' }}</x-filament::button></x-filament::section>@endforeach</div>@endif
+</x-filament-panels::page>
